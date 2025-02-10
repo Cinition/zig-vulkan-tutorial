@@ -1,0 +1,28 @@
+.{
+    .name = "zig-vulkan-tutorial",
+    .version = "1.0.0",
+    .dependencies = .{
+        .vulkan_zig = .{
+            .url = "https://github.com/Snektron/vulkan-zig/archive/604416bf44baf95568c428e1aa55499aa8e07607.tar.gz",
+            .hash = "1220129ea1652cc0f8578db3dcba254bc9fbc6fdd195b5e1021bf4da8592ea5dc9fb",
+        },
+        .vulkan_headers = .{
+            .url = "https://github.com/KhronosGroup/Vulkan-Headers/archive/v1.4.307.tar.gz",
+            .hash = "12207c39644bf0226bdfa332939d3336d588985af5af3b3952c91d4ca9828e79a632",
+        },
+        .zm = .{
+            .url = "git+https://github.com/griush/zm#24e788249dd2cb6ffca0f6e7873a893c38ca361d",
+            .hash = "1220c401b59a7f9a55d3ef51675293d4831d5fe5e8b6842feb44701da8642d9a26f7",
+        },
+        .wio = .{
+            .url = "git+https://github.com/ypsvlq/wio#434d42068cdbf475b8b336a8e01b88dccdd70418",
+            .hash = "122002750405b8afa92632ebf78551faddbf6d4eead84e73c1f005fecc6d45b56a11",
+        },
+    },
+
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}
