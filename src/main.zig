@@ -17,6 +17,10 @@ const apis: []const vk.ApiInfo = &.{
     vk.extensions.khr_swapchain,
 };
 
+// Validation Layer array
+const enableValidationLayers = if (builtin.mode == .Debug) true else false;
+const validationLayers = &[_][*:0]const u8{"VK_LAYER_KHRONOS_validation"};
+
 // Wrappers for dispatch tables
 const BaseDispatch = vk.BaseWrapper(apis);
 const InstanceDispatch = vk.InstanceWrapper(apis);
@@ -54,6 +58,11 @@ const HelloTriangleApplication = struct {
     fn createInstance() !void {
         const vkb = try BaseDispatch.load(instanceProcAddress);
 
+        if (enableValidationLayers and try checkValidationLayerSupport() == false) {
+            std.log.err("validation layers requested, but not available!", .{});
+            return error.InitializationFailed;
+        }
+
         const appInfo = vk.ApplicationInfo{
             .p_application_name = "Hello Triangle",
             .application_version = vk.makeApiVersion(0, 1, 0, 0),
@@ -62,39 +71,95 @@ const HelloTriangleApplication = struct {
             .api_version = vk.API_VERSION_1_0,
         };
 
-        const extensionNames: ?[*]const [*:0]const u8 = switch (builtin.os.tag) {
-            .windows => &[_][*:0]const u8{ "VK_KHR_surface", "VK_KHR_win32_surface" },
-            .macos => &[_][*:0]const u8{ "VK_KHR_surface", "VK_MVK_macos_surface" },
-            .linux => switch (wio.backend.active) {
-                .x11 => &[_][*:0]const u8{ "VK_KHR_surface", "VK_MVK_xlib_surface" },
-                .wayland => [_][*:0]const u8{ "VK_KHR_surface", "VK_MVK_wayland_surface" },
-            },
-            else => &[_][]const u8{},
-        };
-
         var extensionCount: u32 = 0;
         _ = try vkb.enumerateInstanceExtensionProperties(null, &extensionCount, null);
 
-        const extensions = try allocator.alloc(vk.ExtensionProperties, extensionCount);
-        _ = try vkb.enumerateInstanceExtensionProperties(null, &extensionCount, extensions.ptr);
+        const extensionProperties = try allocator.alloc(vk.ExtensionProperties, extensionCount);
+        _ = try vkb.enumerateInstanceExtensionProperties(null, &extensionCount, extensionProperties.ptr);
 
         std.log.info("Available extensions:\n", .{});
-        for (extensions) |name| {
+        for (extensionProperties) |name| {
             std.log.info("{s}", .{name.extension_name});
         }
 
-        const createInfo = vk.InstanceCreateInfo{
+        var createInfo = vk.InstanceCreateInfo{
             .p_application_info = &appInfo,
-            .enabled_extension_count = 2,
-            .pp_enabled_extension_names = extensionNames,
-            .enabled_layer_count = 0,
         };
+
+        const extensions = try getRequiredExtensions();
+        createInfo.enabled_extension_count = @intCast(extensions.items.len);
+        createInfo.pp_enabled_extension_names = extensions.items.ptr;
+
+        if (enableValidationLayers) {
+            createInfo.enabled_layer_count = validationLayers.len;
+            createInfo.pp_enabled_layer_names = validationLayers.ptr;
+        } else {
+            createInfo.enabled_layer_count = 0;
+        }
 
         const vkbInstance = try vkb.createInstance(&createInfo, null);
 
         const vki = try allocator.create(InstanceDispatch);
         vki.* = try InstanceDispatch.load(vkbInstance, vkb.dispatch.vkGetInstanceProcAddr);
         instance = Instance.init(vkbInstance, vki);
+    }
+
+    fn getRequiredExtensions() !std.ArrayList([*:0]const u8) {
+        var extensions = std.ArrayList([*:0]const u8).init(allocator);
+
+        switch (builtin.os.tag) {
+            .windows => {
+                try extensions.append("VK_KHR_surface");
+                try extensions.append("VK_KHR_win32_surface");
+            },
+            .macos => {
+                try extensions.append("VK_KHR_surface");
+                try extensions.append("VK_MVK_macos_surface");
+            },
+            .linux => switch (wio.backend.active) {
+                .x11 => {
+                    try extensions.append("VK_KHR_surface");
+                    try extensions.append("VK_KHR_xlib_surface");
+                },
+                .wayland => {
+                    try extensions.append("VK_KHR_surface");
+                    try extensions.append("VK_KHR_wayland_surface");
+                },
+            },
+            else => {},
+        }
+
+        if (enableValidationLayers) {
+            try extensions.append("VK_EXT_debug_utils");
+        }
+
+        return extensions;
+    }
+
+    fn checkValidationLayerSupport() !bool {
+        const vkb = try BaseDispatch.load(instanceProcAddress);
+
+        var layerCount: u32 = 0;
+        _ = try vkb.enumerateInstanceLayerProperties(&layerCount, null);
+
+        const availableLayers = try allocator.alloc(vk.LayerProperties, layerCount);
+        _ = try vkb.enumerateInstanceLayerProperties(&layerCount, availableLayers.ptr);
+
+        for (validationLayers) |layerName| {
+            var layerFound = false;
+            for (availableLayers) |layerProperties| {
+                if (std.mem.orderZ(u8, layerName, @ptrCast(&layerProperties.layer_name)) == .eq) {
+                    layerFound = true;
+                    return true;
+                }
+            }
+
+            if (layerFound == false) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     fn mainLoop() !bool {
