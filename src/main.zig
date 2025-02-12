@@ -100,6 +100,11 @@ const HelloTriangleApplication = struct {
     fn mainLoop() !bool {
         while (window.getEvent()) |event| {
             switch (event) {
+                .button_press => |button| {
+                    if (button == .q or button == .escape) {
+                        return false;
+                    }
+                },
                 .close => {
                     return false;
                 },
