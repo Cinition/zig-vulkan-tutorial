@@ -3,12 +3,12 @@
     .version = "1.0.0",
     .dependencies = .{
         .vulkan_zig = .{
-            .url = "https://github.com/Snektron/vulkan-zig/archive/604416bf44baf95568c428e1aa55499aa8e07607.tar.gz",
-            .hash = "1220129ea1652cc0f8578db3dcba254bc9fbc6fdd195b5e1021bf4da8592ea5dc9fb",
+            .url = "https://github.com/Snektron/vulkan-zig/archive/bb470f16dabd8195155ba9e3714dc62d7ad69add.tar.gz",
+            .hash = "12205f4e25c7102242d99dfc4f022a9c667bf4c5058b3919364f89fd882b6845d721",
         },
         .vulkan_headers = .{
-            .url = "https://github.com/KhronosGroup/Vulkan-Headers/archive/v1.4.307.tar.gz",
-            .hash = "12207c39644bf0226bdfa332939d3336d588985af5af3b3952c91d4ca9828e79a632",
+            .url = "https://github.com/KhronosGroup/Vulkan-Headers/archive/v1.3.283.tar.gz",
+            .hash = "1220a7e73d72a0d56bc2a65f9d8999a7c019e42260a0744c408d1cded111bc205e10",
         },
         .zm = .{
             .url = "git+https://github.com/griush/zm#24e788249dd2cb6ffca0f6e7873a893c38ca361d",
